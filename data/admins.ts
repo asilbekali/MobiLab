@@ -19,4 +19,4 @@ export function getNextAdmin(): Admin | null {
   const admin = admins[currentAdminIndex];
   currentAdminIndex = (currentAdminIndex + 1) % admins.length;
   return admin;
-}
+} 
