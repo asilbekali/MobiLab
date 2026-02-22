@@ -1,6 +1,7 @@
 "use client";
+
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Loader2 } from "lucide-react"; // Yuklanish uchun
+import { X, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 type ContactModalProps = {
@@ -12,7 +13,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Form ma'lumotlari uchun state
+  // State-lar ma'lumotlarni saqlash uchun
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
 
@@ -20,33 +21,39 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     e.preventDefault();
     setIsLoading(true);
 
-    // Ism va familiyani ajratish (API firstName va lastName so'rayapti)
+    // Ism va Familiyani ajratish (firstName/lastName)
     const nameParts = fullName.trim().split(" ");
     const firstName = nameParts[0] || "";
-    const lastName = nameParts.slice(1).join(" ") || "-"; // Familiya bo'lmasa "-" qo'yadi
+    const lastName = nameParts.slice(1).join(" ") || "-"; // Familiya bo'lmasa "-" tushadi
 
     try {
       const response = await fetch("/api/telegram", {
-        // Route manzilingizga qarang (/api/telegram bo'lishi kerak)
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, phone }),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          phone,
+        }),
       });
 
       const data = await response.json();
 
       if (data.success) {
         setIsSuccess(true);
-        setFullName(""); // Tozalash
+        setFullName("");
         setPhone("");
+
+        // 3 soniyadan keyin modalni yopish
         setTimeout(() => {
           setIsSuccess(false);
           onClose();
         }, 3000);
       } else {
-        alert("Xatolik: " + data.error);
+        alert("Xatolik: " + (data.error || "So'rov yuborilmadi"));
       }
-    } catch (err) {
+    } catch (error) {
+      console.error("Yuborishda xatolik:", error);
       alert("Server bilan bog'lanishda xatolik yuz berdi");
     } finally {
       setIsLoading(false);
@@ -57,6 +64,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -65,6 +73,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
             className="absolute inset-0 bg-black/60 backdrop-blur-xl"
           />
 
+          {/* Modal Content */}
           <motion.div
             initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -84,28 +93,36 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <input
-                    required
-                    type="text"
-                    placeholder="Ism Familiya"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
-                  />
-                  <input
-                    required
-                    type="tel"
-                    placeholder="+998"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
-                  />
+                  <div className="space-y-1">
+                    <input
+                      required
+                      type="text"
+                      placeholder="Ism Familiya"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <input
+                      required
+                      type="tel"
+                      placeholder="+998"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
+                    />
+                  </div>
                   <button
+                    type="submit"
                     disabled={isLoading}
-                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 text-white font-bold py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-lg shadow-red-600/20 flex justify-center items-center"
+                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 text-white font-bold py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-lg shadow-red-600/20 flex justify-center items-center"
                   >
                     {isLoading ? (
-                      <Loader2 className="animate-spin mr-2" />
+                      <>
+                        <Loader2 className="animate-spin mr-2" size={20} />
+                        Yuborilmoqda...
+                      </>
                     ) : (
                       "Ro'yxatdan o'tish"
                     )}

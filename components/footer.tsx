@@ -1,10 +1,17 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Instagram, ArrowUp, CheckCircle2, Send, Phone } from "lucide-react";
+import {
+  Instagram,
+  ArrowUp,
+  CheckCircle2,
+  Send,
+  Phone,
+  Loader2,
+} from "lucide-react";
 import { useState } from "react";
 
-// --- CONTACT MODAL ---
+// --- YANGILANGAN KONTAK MODAL (API BILAN) ---
 function ContactModal({
   isOpen,
   onClose,
@@ -13,14 +20,42 @@ function ContactModal({
   onClose: () => void;
 }) {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSuccess(true);
-    setTimeout(() => {
-      setIsSuccess(false);
-      onClose();
-    }, 3000);
+    setIsLoading(true);
+
+    const nameParts = fullName.trim().split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "-";
+
+    try {
+      const response = await fetch("/api/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName, lastName, phone }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setIsSuccess(true);
+        setFullName("");
+        setPhone("");
+        setTimeout(() => {
+          setIsSuccess(false);
+          onClose();
+        }, 3000);
+      } else {
+        alert("Xatolik yuz berdi");
+      }
+    } catch (err) {
+      alert("Server xatosi");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -55,16 +90,27 @@ function ContactModal({
                   <input
                     required
                     placeholder="Ism Familiya"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
                   />
                   <input
                     required
                     type="tel"
                     placeholder="+998"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
                   />
-                  <button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-lg shadow-red-600/20">
-                    Ro'yxatdan o'tish
+                  <button
+                    disabled={isLoading}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-lg shadow-red-600/20 flex justify-center items-center"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="animate-spin mr-2" />
+                    ) : (
+                      "Ro'yxatdan o'tish"
+                    )}
                   </button>
                 </form>
               </>
@@ -88,7 +134,6 @@ function ContactModal({
   );
 }
 
-// --- ASOSIY FOOTER ---
 export default function Footer() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -102,7 +147,6 @@ export default function Footer() {
     { name: "O'quvchilar fikri", href: "#testimonials" },
   ];
 
-  // YANGILANGAN IJTIMOIY TARMOQLAR RO'YXATI
   const socials = [
     {
       icon: Instagram,
@@ -142,7 +186,6 @@ export default function Footer() {
               Professional bilimlar va kreativ yondashuv.
             </p>
 
-            {/* IJTIMOIY TARMOQLAR IKONALARI */}
             <div className="flex gap-4">
               {socials.map((item, idx) => {
                 const Icon = item.icon;
