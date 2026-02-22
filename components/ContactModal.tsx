@@ -1,6 +1,6 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react"; // Yuklanish uchun
 import { useState } from "react";
 
 type ContactModalProps = {
@@ -10,21 +10,53 @@ type ContactModalProps = {
 
 export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // Form ma'lumotlari uchun state
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSuccess(true);
-    setTimeout(() => {
-      setIsSuccess(false);
-      onClose();
-    }, 3000);
+    setIsLoading(true);
+
+    // Ism va familiyani ajratish (API firstName va lastName so'rayapti)
+    const nameParts = fullName.trim().split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "-"; // Familiya bo'lmasa "-" qo'yadi
+
+    try {
+      const response = await fetch("/api/telegram", {
+        // Route manzilingizga qarang (/api/telegram bo'lishi kerak)
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName, lastName, phone }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setIsSuccess(true);
+        setFullName(""); // Tozalash
+        setPhone("");
+        setTimeout(() => {
+          setIsSuccess(false);
+          onClose();
+        }, 3000);
+      } else {
+        alert("Xatolik: " + data.error);
+      }
+    } catch (err) {
+      alert("Server bilan bog'lanishda xatolik yuz berdi");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -33,7 +65,6 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
             className="absolute inset-0 bg-black/60 backdrop-blur-xl"
           />
 
-          {/* Modal Content */}
           <motion.div
             initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -53,24 +84,31 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-1">
-                    <input
-                      required
-                      type="text"
-                      placeholder="Ism Familiya"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <input
-                      required
-                      type="tel"
-                      placeholder="+998"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
-                    />
-                  </div>
-                  <button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-lg shadow-red-600/20">
-                    Ro'yxatdan o'tish
+                  <input
+                    required
+                    type="text"
+                    placeholder="Ism Familiya"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
+                  />
+                  <input
+                    required
+                    type="tel"
+                    placeholder="+998"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
+                  />
+                  <button
+                    disabled={isLoading}
+                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 text-white font-bold py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-lg shadow-red-600/20 flex justify-center items-center"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="animate-spin mr-2" />
+                    ) : (
+                      "Ro'yxatdan o'tish"
+                    )}
                   </button>
                 </form>
               </>
