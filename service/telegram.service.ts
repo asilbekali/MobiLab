@@ -16,7 +16,7 @@ function getAdminName(adminId: string): string {
   return "Admin";
 }
 
-// CALLBACKNI QAYTA ISHLASH (Webhook orqali chaqiriladi)
+// 1. CALLBACKNI QAYTA ISHLASH (Tugma bosilganda)
 export async function handleCallback(callbackQuery: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const callbackData = callbackQuery.data;
@@ -27,10 +27,15 @@ export async function handleCallback(callbackQuery: any) {
   const [adminId, phone] = callbackData.split("|");
   const adminName = getAdminName(adminId);
 
-  // 1. Xabarni yangilash
-  const newText =
-    messageText +
-    `\n\n✅ <b>Siz ushbu foydalanuvchiga qo'ng'iroq qildingiz</b>`;
+  // Ismni xabardan ajratib olish (Vizual chiroyli chiqishi uchun)
+  const originalSender = messageText.split("\n")[2] || "Mijoz";
+
+  // Xabarni yangilash (Adminga o'zida ko'rinadigan qismi)
+  const updatedText =
+    `${messageText}\n\n` +
+    `━━━━━━━━━━━━━━━━━━\n` +
+    `✅ <b>BU MIJOZ BILAN BOG'LANILDI</b>\n` +
+    `👤 <b>Admin:</b> ${adminName}`;
 
   await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
     method: "POST",
@@ -38,12 +43,12 @@ export async function handleCallback(callbackQuery: any) {
     body: JSON.stringify({
       chat_id: chatId,
       message_id: messageId,
-      text: newText,
+      text: updatedText,
       parse_mode: "HTML",
     }),
   });
 
-  // 2. Tugmalarni o'chirish
+  // Tugmalarni o'chirish
   await fetch(`https://api.telegram.org/bot${token}/editMessageReplyMarkup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -54,26 +59,26 @@ export async function handleCallback(callbackQuery: any) {
     }),
   });
 
-  // 3. Bildirishnoma yuborish
-  await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      callback_query_id: callbackQuery.id,
-      text: "✅ Qo'ng'iroq qilindi",
-    }),
-  });
-
-  // 4. Kanalga log yuborish
+  // Kanalga professional Log yuborish
   const channelId = process.env.TELEGRAM_CHANNEL_ID;
   if (channelId) {
     const now = new Date();
     const callTime = now.toLocaleString("uz-UZ", {
       timeZone: "Asia/Tashkent",
-      dateStyle: "full",
-      timeStyle: "medium",
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
-    const logText = `📞 QO'NG'IROQ QILINDI\n\n👤 Admin: ${adminName}\n📞 Telefon: ${phone}\n⏰ Vaqt: ${callTime}`;
+
+    const logText =
+      `⚡️ <b>HISOBOT: QO'NG'IROQ AMALGA OSHIRILDI</b>\n` +
+      `───────────────────\n\n` +
+      `👨‍💻 <b>Admin:</b> <code>${adminName}</code>\n` +
+      `📞 <b>Mijoz:</b> <code>${phone}</code>\n` +
+      `⏰ <b>Vaqt:</b> ${callTime}\n\n` +
+      `📊 <b>Holat:</b> #Bog'lanildi`;
 
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
@@ -85,14 +90,33 @@ export async function handleCallback(callbackQuery: any) {
       }),
     });
   }
+
+  // Bildirishnoma (Popup)
+  await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      callback_query_id: callbackQuery.id,
+      text: "✅ Ma'lumot kanalga saqlandi!",
+    }),
+  });
 }
 
+// 2. YANGI REGISTRATSIYA (Adminga boradigan birinchi xabar)
 export async function sendTelegramMessage(user: UserData) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const admin = getNextAdmin();
   if (!token || !admin) throw new Error("Bot token yoki admin topilmadi");
 
-  const text = `📩 YANGI REGISTRATSIYA\n\n👤 Ism: ${user.firstName} ${user.lastName}\n📞 Telefon: ${user.phone}\n⏰ Vaqt: ${user.timestamp}\n\n👤 Biriktirildi: ${admin.name}`;
+  // Xabarni vizual boyitish
+  const text =
+    `🆕 <b>YANGI MUROJAAT TUSHDI</b>\n` +
+    `───────────────────\n\n` +
+    `👤 <b>Ism:</b> ${user.firstName} ${user.lastName}\n` +
+    `📞 <b>Tel:</b> <code>${user.phone}</code>\n` +
+    `📅 <b>Sana:</b> ${user.timestamp}\n\n` +
+    `⚡️ <b>Mas'ul admin:</b> <u>${admin.name}</u>\n\n` +
+    `<i>Iltimos, mijoz bilan tezroq bog'laning!</i>`;
 
   const body = {
     chat_id: Number(admin.id),
@@ -102,7 +126,7 @@ export async function sendTelegramMessage(user: UserData) {
       inline_keyboard: [
         [
           {
-            text: "📞 Qo'ng'iroq qilindi",
+            text: "📞 Bog'landim (Tasdiqlash)",
             callback_data: `${admin.id}|${user.phone}`,
           },
         ],
