@@ -11,7 +11,7 @@ import { Instagram, Send, X, CheckCircle2, Loader2, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PatternFormat } from "react-number-format";
 
-// --- CONTACT MODAL ---
+// --- CONTACT MODAL (Telegramga ulangan) ---
 function ContactModal({
   isOpen,
   onClose,
@@ -26,26 +26,49 @@ function ContactModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phone.length < 9) {
+
+    // Telefon raqam tozalangan formatda (faqat raqamlar: 901234567)
+    const cleanPhone = phone.replace(/\D/g, "");
+
+    if (cleanPhone.length < 9) {
       alert("Telefon raqamingizni to'liq kiriting!");
       return;
     }
+
     setIsLoading(true);
+
+    // Ism va familiyani ajratish (Backend kutilganidek)
+    const nameParts = fullName.trim().split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "-";
+
     try {
       const response = await fetch("/api/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, phone: `+998 ${phone}` }),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          // Chiroyli formatda yuborish
+          phone: `+998 (${cleanPhone.substring(0, 2)}) ${cleanPhone.substring(2, 5)}-${cleanPhone.substring(5, 7)}-${cleanPhone.substring(7, 9)}`,
+        }),
       });
-      if (response.ok) {
+
+      const data = await response.json();
+
+      if (data.success) {
         setIsSuccess(true);
+        setFullName("");
+        setPhone("");
         setTimeout(() => {
           setIsSuccess(false);
           onClose();
         }, 3000);
+      } else {
+        alert("Xatolik: " + (data.error || "Yuborib bo'lmadi"));
       }
     } catch (err) {
-      alert("Xatolik!");
+      alert("Server bilan bog'lanishda xatolik yuz berdi");
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +77,7 @@ function ContactModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -66,57 +89,68 @@ function ContactModal({
             initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
-            className="relative w-full max-w-lg bg-zinc-900/90 border-t border-white/10 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] backdrop-blur-2xl"
+            className="relative w-full max-w-lg bg-zinc-900/90 border-t border-white/10 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] backdrop-blur-2xl shadow-2xl"
           >
             {!isSuccess ? (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-black text-white italic">
+                  <h2 className="text-2xl font-black text-white italic tracking-tight">
                     KURSGA YOZILISH
                   </h2>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="text-zinc-500 hover:text-white"
+                    className="p-2 text-zinc-500 hover:text-white transition-colors"
                   >
-                    <X />
+                    <X size={24} />
                   </button>
                 </div>
+
                 <input
                   required
                   placeholder="Ism Familiya"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-red-600 transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-5 text-white outline-none focus:border-red-600 transition-all placeholder:text-zinc-600"
                 />
+
                 <PatternFormat
                   required
                   format="+998 (##) ###-##-##"
                   mask="_"
                   value={phone}
-                  onValueChange={(v) => setPhone(v.value)}
+                  onValueChange={(values) => setPhone(values.value)}
                   placeholder="+998 (__) ___-__-__"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-red-600 transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-5 text-white outline-none focus:border-red-600 transition-all placeholder:text-zinc-600"
                 />
+
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-red-600 text-white font-black py-4 rounded-xl active:scale-95 transition-transform uppercase"
+                  className="w-full bg-red-600 text-white font-black py-5 rounded-xl active:scale-95 transition-all uppercase tracking-widest disabled:bg-zinc-800"
                 >
                   {isLoading ? (
-                    <Loader2 className="animate-spin" />
+                    <Loader2 className="animate-spin mx-auto" size={24} />
                   ) : (
                     "Tasdiqlash"
                   )}
                 </button>
               </form>
             ) : (
-              <div className="py-10 text-center">
-                <CheckCircle2
-                  size={60}
-                  className="text-green-500 mx-auto mb-4"
-                />
-                <h3 className="text-white font-bold">Muvaffaqiyatli!</h3>
+              <div className="py-12 text-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6"
+                >
+                  <CheckCircle2 size={40} className="text-white" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-white uppercase italic">
+                  Muvaffaqiyatli!
+                </h3>
+                <p className="text-zinc-400 mt-2">
+                  Adminlarimiz tez orada bog'lanishadi.
+                </p>
               </div>
             )}
           </motion.div>
@@ -145,7 +179,7 @@ export default function Hero() {
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
-  }, []);
+  }, [mouseX, mouseY]);
 
   return (
     <section
@@ -171,7 +205,6 @@ export default function Hero() {
           <img
             src="/herobg.png"
             alt="Hero"
-            /* Mobileda 10px tepaga ko'tarish: transform -translate-y-[10px] */
             className="w-full h-[75vh] sm:h-full object-contain object-bottom select-none mt-[-15vh] sm:mt-0 transform -translate-y-[10px] sm:translate-y-0"
           />
 
@@ -198,7 +231,6 @@ export default function Hero() {
               </span>
             </div>
 
-            {/* Ism familiya mobileda to'liq chiqishi uchun text-size moslashtirildi */}
             <h1 className="text-[12vw] sm:text-[15vw] lg:text-[85px] font-black leading-[0.85] uppercase mb-6 italic">
               <motion.span
                 initial={{ x: -50, opacity: 0 }}
