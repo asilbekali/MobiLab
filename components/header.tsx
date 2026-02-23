@@ -9,6 +9,8 @@ import {
 } from "framer-motion";
 import { Menu, X, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
+// 1. Kutubxonani import qilamiz
+import { PatternFormat } from "react-number-format";
 
 const navItems = [
   { label: "Bosh sahifa", href: "#home" },
@@ -26,10 +28,17 @@ function ContactModal({
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(""); // Bu yerda faqat raqamlar saqlanadi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Raqam to'liqligini tekshirish (9 ta raqam bo'lishi kerak)
+    if (phone.length < 9) {
+      alert("Iltimos, telefon raqamingizni to'liq kiriting");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const nameParts = fullName.trim().split(" ");
@@ -39,9 +48,11 @@ function ContactModal({
         body: JSON.stringify({
           firstName: nameParts[0] || "",
           lastName: nameParts.slice(1).join(" ") || "-",
-          phone,
+          // Telegramga chiroyli formatda yuboramiz
+          phone: `+998 ${phone.replace(/(\d{2})(\d{3})(\d{2})(\d{2})/, "($1) $2-$3-$4")}`,
         }),
       });
+
       if (response.ok) {
         setIsSuccess(true);
         setFullName("");
@@ -85,30 +96,35 @@ function ContactModal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="p-2 text-zinc-500"
+                    className="p-2 text-zinc-500 hover:text-white transition-colors"
                   >
                     <X size={24} />
                   </button>
                 </div>
+
                 <input
                   required
                   placeholder="Ism Familiya"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-red-600 transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-red-600 transition-all placeholder:text-zinc-600"
                 />
-                <input
+
+                {/* Telefon raqam uchun maskali input */}
+                <PatternFormat
                   required
-                  type="tel"
-                  placeholder="+998"
+                  format="+998 (##) ###-##-##"
+                  mask="_"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-red-600"
+                  onValueChange={(values) => setPhone(values.value)}
+                  placeholder="+998 (__) ___-__-__"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-red-600 transition-all placeholder:text-zinc-600"
                 />
+
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-red-600 text-white font-black py-4 rounded-xl flex justify-center items-center active:scale-95 transition-all"
+                  className="w-full bg-red-600 text-white font-black py-4 rounded-xl flex justify-center items-center active:scale-95 transition-all disabled:bg-zinc-800 disabled:text-zinc-500"
                 >
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
@@ -119,7 +135,13 @@ function ContactModal({
               </form>
             ) : (
               <div className="py-10 flex flex-col items-center text-center">
-                <CheckCircle2 size={60} className="text-green-500 mb-4" />
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="bg-green-500/20 p-4 rounded-full mb-4"
+                >
+                  <CheckCircle2 size={60} className="text-green-500" />
+                </motion.div>
                 <h3 className="text-xl font-bold text-white">
                   Muvaffaqiyatli!
                 </h3>
@@ -150,10 +172,13 @@ export default function Header() {
     setIsScrolled(latest > 20);
   });
 
-  // Mobil menyu ochiqligida scrollni to'xtatish
   useEffect(() => {
-    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "unset";
-  }, [isMobileMenuOpen]);
+    if (isMobileMenuOpen || isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  }, [isMobileMenuOpen, isModalOpen]);
 
   return (
     <>
@@ -163,7 +188,6 @@ export default function Header() {
         .enroll-btn-header { font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 900; padding: 10px 20px; background: #dc2626; color: white; border-radius: 4px; text-transform: uppercase; }
       `}</style>
 
-      {/* ASOSIY HEADER */}
       <motion.header
         initial={{ y: 0 }}
         animate={{ y: isHidden ? -100 : 0 }}
@@ -183,7 +207,6 @@ export default function Header() {
             SHOXJAXON <span className="text-red-600">AXMEDOV</span>
           </Link>
 
-          {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
             {navItems.map((item) => (
               <a
@@ -202,7 +225,6 @@ export default function Header() {
             </button>
           </nav>
 
-          {/* Burger Button */}
           <button
             className="md:hidden text-white p-2"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -212,7 +234,6 @@ export default function Header() {
         </div>
       </motion.header>
 
-      {/* MOBIL MENYU OVERLAY (ALOHIDA QISIM) */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -221,7 +242,6 @@ export default function Header() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black z-[999] md:hidden flex flex-col pt-32 px-10 gap-8"
           >
-            {/* Orqa fon uchun rasm yoki gradient (ixtiyoriy) */}
             <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/40 via-transparent to-transparent"></div>
 
             <nav className="flex flex-col gap-6 relative z-10">

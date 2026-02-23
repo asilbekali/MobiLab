@@ -8,10 +8,13 @@ import {
   Send,
   Phone,
   Loader2,
+  X,
 } from "lucide-react";
 import { useState } from "react";
+// 1. Kutubxonani import qilamiz
+import { PatternFormat } from "react-number-format";
 
-// --- YANGILANGAN KONTAK MODAL (API BILAN) ---
+// --- YANGILANGAN KONTAK MODAL ---
 function ContactModal({
   isOpen,
   onClose,
@@ -22,10 +25,17 @@ function ContactModal({
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(""); // Faqat raqamlar saqlanadi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Raqam to'liqligini tekshirish (9 ta raqam bo'lishi kerak)
+    if (phone.length < 9) {
+      alert("Iltimos, telefon raqamingizni to'liq kiriting");
+      return;
+    }
+
     setIsLoading(true);
 
     const nameParts = fullName.trim().split(" ");
@@ -36,7 +46,12 @@ function ContactModal({
       const response = await fetch("/api/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, phone }),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          // Telegramga chiroyli formatda yuborish
+          phone: `+998 (${phone.substring(0, 2)}) ${phone.substring(2, 5)}-${phone.substring(5, 7)}-${phone.substring(7, 9)}`,
+        }),
       });
 
       const data = await response.json();
@@ -61,7 +76,7 @@ function ContactModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -78,14 +93,23 @@ function ContactModal({
           >
             {!isSuccess ? (
               <>
-                <div className="w-12 h-1.5 bg-zinc-700 rounded-full mx-auto mb-8 sm:hidden" />
-                <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">
-                  Kursga yozilish
-                </h2>
-                <p className="text-zinc-400 mb-8">
-                  Ma'lumotlaringizni qoldiring, adminlarimiz tez orada
-                  bog'lanishadi.
-                </p>
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h2 className="text-3xl font-black text-white uppercase tracking-tight">
+                      Kursga yozilish
+                    </h2>
+                    <p className="text-zinc-400 mt-2">
+                      Ma'lumotlaringizni qoldiring.
+                    </p>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="text-zinc-500 hover:text-white p-2"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <input
                     required
@@ -94,17 +118,21 @@ function ContactModal({
                     onChange={(e) => setFullName(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
                   />
-                  <input
+
+                  {/* Telefon raqam uchun maskali input */}
+                  <PatternFormat
                     required
-                    type="tel"
-                    placeholder="+998"
+                    format="+998 (##) ###-##-##"
+                    mask="_"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onValueChange={(values) => setPhone(values.value)}
+                    placeholder="+998 (__) ___-__-__"
                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
                   />
+
                   <button
                     disabled={isLoading}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-lg shadow-red-600/20 flex justify-center items-center"
+                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 text-white font-bold py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-lg shadow-red-600/20 flex justify-center items-center"
                   >
                     {isLoading ? (
                       <Loader2 className="animate-spin mr-2" />
@@ -116,9 +144,13 @@ function ContactModal({
               </>
             ) : (
               <div className="py-12 flex flex-col items-center">
-                <div className="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-red-600/40">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-red-600/40"
+                >
                   <CheckCircle2 size={50} className="text-white" />
-                </div>
+                </motion.div>
                 <h3 className="text-2xl font-bold text-white text-center">
                   Muvaffaqiyatli!
                 </h3>
@@ -150,7 +182,7 @@ export default function Footer() {
   const socials = [
     {
       icon: Instagram,
-      href: "https://instagram.com/shoxjaxon_axmedov",
+      href: "https://www.instagram.com/sh_akhmeedov/",
       hoverColor:
         "hover:bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]",
     },

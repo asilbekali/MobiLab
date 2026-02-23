@@ -1,8 +1,10 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
+// 1. Kutubxonani import qilamiz
+import { PatternFormat } from "react-number-format";
 
 type ContactModalProps = {
   isOpen: boolean;
@@ -12,19 +14,26 @@ type ContactModalProps = {
 export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // State-lar ma'lumotlarni saqlash uchun
   const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(""); // Bu yerda toza raqamlar saqlanadi
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Raqam to'liq kiritilganini tekshirish (9 ta raqam: 90 123 45 67)
+    // +998 qismi maskada bo'ladi, bizga faqat ichki qismi kerak
+    const cleanPhone = phone.replace(/\D/g, ""); // Faqat raqamlarni qoldirish
+
+    if (cleanPhone.length < 9) {
+      alert("Iltimos, telefon raqamingizni to'liq kiriting");
+      return;
+    }
+
     setIsLoading(true);
 
-    // Ism va Familiyani ajratish (firstName/lastName)
     const nameParts = fullName.trim().split(" ");
     const firstName = nameParts[0] || "";
-    const lastName = nameParts.slice(1).join(" ") || "-"; // Familiya bo'lmasa "-" tushadi
+    const lastName = nameParts.slice(1).join(" ") || "-";
 
     try {
       const response = await fetch("/api/telegram", {
@@ -33,7 +42,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
         body: JSON.stringify({
           firstName,
           lastName,
-          phone,
+          phone: `+998 ${phone}`, // Telegramga chiroyli formatda boradi
         }),
       });
 
@@ -43,8 +52,6 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
         setIsSuccess(true);
         setFullName("");
         setPhone("");
-
-        // 3 soniyadan keyin modalni yopish
         setTimeout(() => {
           setIsSuccess(false);
           onClose();
@@ -64,7 +71,6 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -73,12 +79,10 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
             className="absolute inset-0 bg-black/60 backdrop-blur-xl"
           />
 
-          {/* Modal Content */}
           <motion.div
             initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="relative w-full max-w-lg bg-zinc-900/90 border-t sm:border border-white/10 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl backdrop-blur-md"
           >
             {!isSuccess ? (
@@ -93,26 +97,26 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-1">
-                    <input
-                      required
-                      type="text"
-                      placeholder="Ism Familiya"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <input
-                      required
-                      type="tel"
-                      placeholder="+998"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
-                    />
-                  </div>
+                  <input
+                    required
+                    type="text"
+                    placeholder="Ism Familiya"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
+                  />
+
+                  {/* O'zbekiston formati uchun Input Maska */}
+                  <PatternFormat
+                    required
+                    format="+998 (##) ###-##-##"
+                    mask="_"
+                    value={phone}
+                    onValueChange={(values) => setPhone(values.value)}
+                    placeholder="+998 (__) ___-__-__"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
+                  />
+
                   <button
                     type="submit"
                     disabled={isLoading}
@@ -120,7 +124,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 className="animate-spin mr-2" size={20} />
+                        <Loader2 className="animate-spin mr-2" size={20} />{" "}
                         Yuborilmoqda...
                       </>
                     ) : (
@@ -130,7 +134,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 </form>
               </>
             ) : (
-              <div className="py-12 flex flex-col items-center">
+              <div className="py-12 flex flex-col items-center text-center">
                 <motion.div
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -138,10 +142,10 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 >
                   <CheckCircle2 size={50} className="text-white" />
                 </motion.div>
-                <h3 className="text-2xl font-bold text-white text-center">
+                <h3 className="text-2xl font-bold text-white">
                   Muvaffaqiyatli!
                 </h3>
-                <p className="text-zinc-400 text-center mt-2">
+                <p className="text-zinc-400 mt-2">
                   Tez orada sizga aloqaga chiqamiz.
                 </p>
               </div>
