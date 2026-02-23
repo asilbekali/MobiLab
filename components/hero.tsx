@@ -11,7 +11,7 @@ import { Instagram, Send, X, CheckCircle2, Loader2, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PatternFormat } from "react-number-format";
 
-// --- CONTACT MODAL (O'zgarishsiz) ---
+// --- CONTACT MODAL ---
 function ContactModal({
   isOpen,
   onClose,
@@ -157,7 +157,7 @@ export default function Hero() {
         onClose={() => setIsModalOpen(false)}
       />
 
-      {/* BACKGROUND & IMAGE ANIMATION (Mobilesiga tegilmadi) */}
+      {/* BACKGROUND & IMAGE ANIMATION */}
       <motion.div
         initial={{ scale: 1.2, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -171,7 +171,8 @@ export default function Hero() {
           <img
             src="/herobg.png"
             alt="Hero"
-            className="w-full h-[75vh] sm:h-full object-contain object-bottom select-none mt-[-15vh] sm:mt-0"
+            /* Mobileda 10px tepaga ko'tarish: transform -translate-y-[10px] */
+            className="w-full h-[75vh] sm:h-full object-contain object-bottom select-none mt-[-15vh] sm:mt-0 transform -translate-y-[10px] sm:translate-y-0"
           />
 
           <div className="absolute inset-x-0 bottom-0 h-[50%] z-10 pointer-events-none">
@@ -181,25 +182,24 @@ export default function Hero() {
         </motion.div>
       </motion.div>
 
-      {/* CONTENT (WEBDA YUZNI BERKITMASLIGI UCHUN TO'G'IRLANDI) */}
+      {/* CONTENT */}
       <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 pb-16 sm:pb-24 relative z-30">
         <div className="overflow-hidden">
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            /* lg:ml-0 va lg:w-[50%] qo'shildi - Webda matnlar chap tomonda turadi, markazni yopmaydi */
-            className="w-full lg:w-[45%] lg:text-left"
+            className="w-full lg:w-[50%] lg:text-left"
           >
             <div className="flex items-center gap-2 mb-4">
               <span className="w-10 h-[2px] bg-red-600" />
-              <span className="text-red-600 text-xs font-bold uppercase tracking-widest italic">
+              <span className="text-red-600 text-[10px] sm:text-xs font-bold uppercase tracking-widest italic">
                 Professional Mobilograf
               </span>
             </div>
 
-            {/* Webda text o'lchami lg:text-[85px] ga tushirildi, yuzni yopmasligi uchun */}
-            <h1 className="text-[15vw] lg:text-[85px] font-black leading-[0.8] uppercase mb-6 italic">
+            {/* Ism familiya mobileda to'liq chiqishi uchun text-size moslashtirildi */}
+            <h1 className="text-[12vw] sm:text-[15vw] lg:text-[85px] font-black leading-[0.85] uppercase mb-6 italic">
               <motion.span
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
@@ -244,7 +244,7 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* SOCIALS (O'zgarishsiz) */}
+      {/* SOCIALS */}
       <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-center">
         <AnimatePresence>
           {showSocials && (
