@@ -45,7 +45,7 @@ const AnimatedCounter = ({
 
 const stats = [
   { label: "Mijozlar", value: 50, suffix: "+" },
-  { label: "Loyihalar", value: 120, suffix: "+" },
+  { label: "Shogirtlar soni", value: 300, suffix: "+" },
   { label: "Tajriba yili", value: 5, suffix: "+" },
   { label: "Mukofotlar", value: 15, suffix: "" },
 ];
