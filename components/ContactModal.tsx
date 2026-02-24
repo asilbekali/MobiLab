@@ -43,7 +43,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
           firstName,
           lastName,
           // Telegramda chiroyli ko'rinishi uchun formatlangan raqam
-          phone: `+998 (${cleanPhone.substring(0, 2)}) ${cleanPhone.substring(2, 5)}-${cleanPhone.substring(5, 7)}-${cleanPhone.substring(7, 9)}`,
+          phone: `+998${cleanPhone.substring(0, 2)}${cleanPhone.substring(2, 5)}${cleanPhone.substring(5, 7)}${cleanPhone.substring(7, 9)}`,
         }),
       });
 
@@ -116,7 +116,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                     <input
                       required
                       type="text"
-                      placeholder="Masalan: Shoxjaxon Axmedov"
+                      placeholder="Masalan: Ahmetov Ahmed"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-700"

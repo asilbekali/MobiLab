@@ -1,170 +1,10 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Instagram,
-  ArrowUp,
-  CheckCircle2,
-  Send,
-  Phone,
-  Loader2,
-  X,
-} from "lucide-react";
+import { motion } from "framer-motion";
+import { Instagram, ArrowUp, Send, Phone } from "lucide-react";
 import { useState } from "react";
-// 1. Kutubxonani import qilamiz
-import { PatternFormat } from "react-number-format";
-
-// --- YANGILANGAN KONTAK MODAL ---
-function ContactModal({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState(""); // Faqat raqamlar saqlanadi
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Raqam to'liqligini tekshirish (9 ta raqam bo'lishi kerak)
-    if (phone.length < 9) {
-      alert("Iltimos, telefon raqamingizni to'liq kiriting");
-      return;
-    }
-
-    setIsLoading(true);
-
-    const nameParts = fullName.trim().split(" ");
-    const firstName = nameParts[0] || "";
-    const lastName = nameParts.slice(1).join(" ") || "-";
-
-    try {
-      const response = await fetch("/api/telegram", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          // Telegramga chiroyli formatda yuborish
-          phone: `+998 (${phone.substring(0, 2)}) ${phone.substring(2, 5)}-${phone.substring(5, 7)}-${phone.substring(7, 9)}`,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setIsSuccess(true);
-        setFullName("");
-        setPhone("");
-        setTimeout(() => {
-          setIsSuccess(false);
-          onClose();
-        }, 3000);
-      } else {
-        alert("Xatolik yuz berdi");
-      }
-    } catch (err) {
-      alert("Server xatosi");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-xl"
-          />
-          <motion.div
-            initial={{ y: "100%", opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: "100%", opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-lg bg-zinc-900/90 border-t sm:border border-white/10 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl backdrop-blur-md"
-          >
-            {!isSuccess ? (
-              <>
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h2 className="text-3xl font-black text-white uppercase tracking-tight">
-                      Kursga yozilish
-                    </h2>
-                    <p className="text-zinc-400 mt-2">
-                      Ma'lumotlaringizni qoldiring.
-                    </p>
-                  </div>
-                  <button
-                    onClick={onClose}
-                    className="text-zinc-500 hover:text-white p-2"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <input
-                    required
-                    placeholder="Ism Familiya"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
-                  />
-
-                  {/* Telefon raqam uchun maskali input */}
-                  <PatternFormat
-                    required
-                    format="+998 (##) ###-##-##"
-                    mask="_"
-                    value={phone}
-                    onValueChange={(values) => setPhone(values.value)}
-                    placeholder="+998 (__) ___-__-__"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-red-600 outline-none transition-all placeholder:text-zinc-600"
-                  />
-
-                  <button
-                    disabled={isLoading}
-                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 text-white font-bold py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-lg shadow-red-600/20 flex justify-center items-center"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="animate-spin mr-2" />
-                    ) : (
-                      "Ro'yxatdan o'tish"
-                    )}
-                  </button>
-                </form>
-              </>
-            ) : (
-              <div className="py-12 flex flex-col items-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-red-600/40"
-                >
-                  <CheckCircle2 size={50} className="text-white" />
-                </motion.div>
-                <h3 className="text-2xl font-bold text-white text-center">
-                  Muvaffaqiyatli!
-                </h3>
-                <p className="text-zinc-400 text-center mt-2">
-                  Tez orada sizga aloqaga chiqamiz.
-                </p>
-              </div>
-            )}
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
-  );
-}
+// Yangi universal modalni import qilamiz
+import ContactModal from "./ContactModal";
 
 export default function Footer() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -209,7 +49,7 @@ export default function Footer() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-5xl lg:text-7xl font-black text-white mb-8 leading-tight uppercase tracking-tighter">
+            <h2 className="text-5xl lg:text-7xl font-black text-white mb-8 leading-tight uppercase tracking-tighter italic">
               Keling, birgalikda <br />
               <span className="text-red-600">ijod qilamiz</span>
             </h2>
@@ -251,7 +91,7 @@ export default function Footer() {
                 <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 shadow-2xl shadow-red-600/40">
                   <Send className="text-white ml-1" size={32} />
                 </div>
-                <h3 className="text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter mb-2">
+                <h3 className="text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter mb-2 italic">
                   Kursga yozilish
                 </h3>
                 <p className="text-zinc-500 group-hover:text-white transition-colors font-mono uppercase tracking-widest text-xs">
@@ -294,6 +134,7 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* Umumiy modalni shu yerda chaqiramiz */}
       <ContactModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

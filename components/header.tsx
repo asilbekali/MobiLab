@@ -7,153 +7,16 @@ import {
   useScroll,
   useMotionValueEvent,
 } from "framer-motion";
-import { Menu, X, CheckCircle2, Loader2 } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
-// 1. Kutubxonani import qilamiz
-import { PatternFormat } from "react-number-format";
+// Yangi modalni import qilamiz (fayl yo'li to'g'riligini tekshiring)
+import ContactModal from "./ContactModal";
 
 const navItems = [
   { label: "Bosh sahifa", href: "#home" },
   { label: "Kurs ma'lumoti", href: "#services" },
   { label: "O‘quvchilar fikri", href: "#testimonials" },
 ];
-
-function ContactModal({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState(""); // Bu yerda faqat raqamlar saqlanadi
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Raqam to'liqligini tekshirish (9 ta raqam bo'lishi kerak)
-    if (phone.length < 9) {
-      alert("Iltimos, telefon raqamingizni to'liq kiriting");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const nameParts = fullName.trim().split(" ");
-      const response = await fetch("/api/telegram", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: nameParts[0] || "",
-          lastName: nameParts.slice(1).join(" ") || "-",
-          // Telegramga chiroyli formatda yuboramiz
-          phone: `+998 ${phone.replace(/(\d{2})(\d{3})(\d{2})(\d{2})/, "($1) $2-$3-$4")}`,
-        }),
-      });
-
-      if (response.ok) {
-        setIsSuccess(true);
-        setFullName("");
-        setPhone("");
-        setTimeout(() => {
-          setIsSuccess(false);
-          onClose();
-        }, 3000);
-      }
-    } catch (err) {
-      alert("Xatolik yuz berdi.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/95 backdrop-blur-md"
-          />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="relative w-full max-w-lg bg-zinc-900 border-t border-white/10 p-6 sm:p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl"
-          >
-            {!isSuccess ? (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-xl font-black text-white uppercase tracking-tighter">
-                    Ro'yxatdan o'tish
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="p-2 text-zinc-500 hover:text-white transition-colors"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-
-                <input
-                  required
-                  placeholder="Ism Familiya"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-red-600 transition-all placeholder:text-zinc-600"
-                />
-
-                {/* Telefon raqam uchun maskali input */}
-                <PatternFormat
-                  required
-                  format="+998 (##) ###-##-##"
-                  mask="_"
-                  value={phone}
-                  onValueChange={(values) => setPhone(values.value)}
-                  placeholder="+998 (__) ___-__-__"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-red-600 transition-all placeholder:text-zinc-600"
-                />
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-red-600 text-white font-black py-4 rounded-xl flex justify-center items-center active:scale-95 transition-all disabled:bg-zinc-800 disabled:text-zinc-500"
-                >
-                  {isLoading ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    "TASDIQLASH"
-                  )}
-                </button>
-              </form>
-            ) : (
-              <div className="py-10 flex flex-col items-center text-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="bg-green-500/20 p-4 rounded-full mb-4"
-                >
-                  <CheckCircle2 size={60} className="text-green-500" />
-                </motion.div>
-                <h3 className="text-xl font-bold text-white">
-                  Muvaffaqiyatli!
-                </h3>
-                <p className="text-zinc-400 mt-2">Siz bilan bog'lanamiz.</p>
-              </div>
-            )}
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
-  );
-}
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -276,6 +139,7 @@ export default function Header() {
         )}
       </AnimatePresence>
 
+      {/* Yangi ContactModal bu yerda chaqiriladi */}
       <ContactModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

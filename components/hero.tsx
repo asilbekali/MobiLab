@@ -7,164 +7,16 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
-import { Instagram, Send, X, CheckCircle2, Loader2, Phone } from "lucide-react";
+import { Instagram, Send, X, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
-import { PatternFormat } from "react-number-format";
+// Yangi universal modalni import qilamiz (yo'lni tekshiring)
+import ContactModal from "./ContactModal";
 
-// --- CONTACT MODAL (Telegramga ulangan) ---
-function ContactModal({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Telefon raqam tozalangan formatda (faqat raqamlar: 901234567)
-    const cleanPhone = phone.replace(/\D/g, "");
-
-    if (cleanPhone.length < 9) {
-      alert("Telefon raqamingizni to'liq kiriting!");
-      return;
-    }
-
-    setIsLoading(true);
-
-    // Ism va familiyani ajratish (Backend kutilganidek)
-    const nameParts = fullName.trim().split(" ");
-    const firstName = nameParts[0] || "";
-    const lastName = nameParts.slice(1).join(" ") || "-";
-
-    try {
-      const response = await fetch("/api/telegram", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          // Chiroyli formatda yuborish
-          phone: `+998 (${cleanPhone.substring(0, 2)}) ${cleanPhone.substring(2, 5)}-${cleanPhone.substring(5, 7)}-${cleanPhone.substring(7, 9)}`,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setIsSuccess(true);
-        setFullName("");
-        setPhone("");
-        setTimeout(() => {
-          setIsSuccess(false);
-          onClose();
-        }, 3000);
-      } else {
-        alert("Xatolik: " + (data.error || "Yuborib bo'lmadi"));
-      }
-    } catch (err) {
-      alert("Server bilan bog'lanishda xatolik yuz berdi");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-xl"
-          />
-          <motion.div
-            initial={{ y: "100%", opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: "100%", opacity: 0 }}
-            className="relative w-full max-w-lg bg-zinc-900/90 border-t border-white/10 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] backdrop-blur-2xl shadow-2xl"
-          >
-            {!isSuccess ? (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-black text-white italic tracking-tight">
-                    KURSGA YOZILISH
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="p-2 text-zinc-500 hover:text-white transition-colors"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-
-                <input
-                  required
-                  placeholder="Ism Familiya"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-5 text-white outline-none focus:border-red-600 transition-all placeholder:text-zinc-600"
-                />
-
-                <PatternFormat
-                  required
-                  format="+998 (##) ###-##-##"
-                  mask="_"
-                  value={phone}
-                  onValueChange={(values) => setPhone(values.value)}
-                  placeholder="+998 (__) ___-__-__"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-5 text-white outline-none focus:border-red-600 transition-all placeholder:text-zinc-600"
-                />
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-red-600 text-white font-black py-5 rounded-xl active:scale-95 transition-all uppercase tracking-widest disabled:bg-zinc-800"
-                >
-                  {isLoading ? (
-                    <Loader2 className="animate-spin mx-auto" size={24} />
-                  ) : (
-                    "Tasdiqlash"
-                  )}
-                </button>
-              </form>
-            ) : (
-              <div className="py-12 text-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6"
-                >
-                  <CheckCircle2 size={40} className="text-white" />
-                </motion.div>
-                <h3 className="text-2xl font-bold text-white uppercase italic">
-                  Muvaffaqiyatli!
-                </h3>
-                <p className="text-zinc-400 mt-2">
-                  Adminlarimiz tez orada bog'lanishadi.
-                </p>
-              </div>
-            )}
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-// --- MAIN HERO ---
 export default function Hero() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSocials, setShowSocials] = useState(false);
 
+  // SICHQONCHA ANIMATSIYASI UCHUN
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
   const smoothX = useSpring(mouseX, { stiffness: 50, damping: 20 });
@@ -186,6 +38,7 @@ export default function Hero() {
       id="home"
       className="relative h-[100svh] w-full overflow-hidden bg-black flex flex-col justify-end"
     >
+      {/* Universal Modal */}
       <ContactModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -231,7 +84,7 @@ export default function Hero() {
               </span>
             </div>
 
-            <h1 className="text-[12vw] sm:text-[15vw] lg:text-[85px] font-black leading-[0.85] uppercase mb-6 italic">
+            <h1 className="text-[12vw] sm:text-[15vw] lg:text-[85px] font-black leading-[0.85] uppercase mb-6 italic text-white">
               <motion.span
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
@@ -244,7 +97,7 @@ export default function Hero() {
                 initial={{ x: 50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.9 }}
-                className="text-white block"
+                className="block"
               >
                 Axmedov
               </motion.span>
