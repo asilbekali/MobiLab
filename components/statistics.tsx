@@ -59,10 +59,9 @@ export default function Statistics() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true, margin: "-100px" }}
-          /* ASOSIY O'ZGARISH: 
-             grid-cols-2 (mobileda 2 ta ustun)
-             lg:grid-cols-4 (katta ekranda 4 ta ustun)
-          */
+          
+          // ASOSIY O'ZGARISH:
+
           className="grid grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-4 md:gap-8"
         >
           {stats.map((stat, i) => (
@@ -89,5 +88,3 @@ export default function Statistics() {
     </section>
   );
 }
-
-
