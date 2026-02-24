@@ -14,14 +14,12 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState(""); // Maskasiz raqamlar saqlanadi
+  const [phone, setPhone] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Faqat raqamlarni ajratib olish (masalan: 901234567)
     const cleanPhone = phone.replace(/\D/g, "");
-
     if (cleanPhone.length < 9) {
       alert("Iltimos, telefon raqamingizni to'liq kiriting");
       return;
@@ -29,31 +27,36 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
     setIsLoading(true);
 
-    // Ism va familiyani ajratish
     const nameParts = fullName.trim().split(" ");
     const firstName = nameParts[0] || "";
     const lastName = nameParts.slice(1).join(" ") || "-";
 
     try {
-      // Sizning API route-ingizga so'rov yuboramiz
       const response = await fetch("/api/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName,
           lastName,
-          // Telegramda chiroyli ko'rinishi uchun formatlangan raqam
-          phone: `+998${cleanPhone.substring(0, 2)}${cleanPhone.substring(2, 5)}${cleanPhone.substring(5, 7)}${cleanPhone.substring(7, 9)}`,
+          phone: `+998${cleanPhone}`,
         }),
       });
 
       const data = await response.json();
 
       if (data.success) {
+        // --- FACEBOOK PIXEL LEAD EVENT START ---
+        if (typeof window !== "undefined" && (window as any).fbq) {
+          (window as any).fbq("track", "Lead", {
+            content_name: "Kursga yozilish",
+            status: "Success",
+          });
+        }
+        // --- FACEBOOK PIXEL LEAD EVENT END ---
+
         setIsSuccess(true);
         setFullName("");
         setPhone("");
-        // 3 soniyadan keyin modalni yopish
         setTimeout(() => {
           setIsSuccess(false);
           onClose();
@@ -69,11 +72,11 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     }
   };
 
+  // ... (Pastki qismdagi dizayn kodlari o'zgarishsiz qoladi)
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          {/* Orqa fon (Overlay) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -82,7 +85,6 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
             className="absolute inset-0 bg-black/60 backdrop-blur-xl"
           />
 
-          {/* Modal oynasi */}
           <motion.div
             initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -155,7 +157,6 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 </form>
               </>
             ) : (
-              /* Muvaffaqiyatli yuborilgandagi holat */
               <div className="py-12 flex flex-col items-center text-center">
                 <motion.div
                   initial={{ scale: 0.5, opacity: 0 }}

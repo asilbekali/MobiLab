@@ -7,16 +7,31 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
-import { Instagram, Send, X, Phone } from "lucide-react";
+import { Instagram, Send, X, Phone, Timer } from "lucide-react";
 import { useEffect, useState } from "react";
-// Yangi universal modalni import qilamiz (yo'lni tekshiring)
 import ContactModal from "./ContactModal";
 
 export default function Hero() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSocials, setShowSocials] = useState(false);
 
-  // SICHQONCHA ANIMATSIYASI UCHUN
+  // TAYMER UCHUN LOGIKA (120 sekund = 2 minut)
+  const [timeLeft, setTimeLeft] = useState(120);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev <= 0 ? 120 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // SICHQONCHA ANIMATSIYASI
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
   const smoothX = useSpring(mouseX, { stiffness: 50, damping: 20 });
@@ -38,13 +53,12 @@ export default function Hero() {
       id="home"
       className="relative h-[100svh] w-full overflow-hidden bg-black flex flex-col justify-end"
     >
-      {/* Universal Modal */}
       <ContactModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
 
-      {/* BACKGROUND & IMAGE ANIMATION */}
+      {/* BACKGROUND & IMAGE */}
       <motion.div
         initial={{ scale: 1.2, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -60,7 +74,6 @@ export default function Hero() {
             alt="Hero"
             className="w-full h-[75vh] sm:h-full object-contain object-bottom select-none mt-[-15vh] sm:mt-0 transform -translate-y-[10px] sm:translate-y-0"
           />
-
           <div className="absolute inset-x-0 bottom-0 h-[50%] z-10 pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-20" />
             <div className="absolute inset-0 backdrop-blur-[10px] [mask-image:linear-gradient(to_top,black_20%,transparent_100%)] z-10" />
@@ -107,11 +120,29 @@ export default function Hero() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.1 }}
-              className="text-zinc-400 text-sm sm:text-lg max-w-sm mb-10 font-medium"
+              className="text-zinc-400 text-sm sm:text-lg max-w-sm mb-8 font-medium"
             >
               Kreativ kontent orqali brendingizni rivojlantiring. Mobilografiya
               xizmati va kurslar.
             </motion.p>
+
+            {/* MARKETING TIMER SECTION */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.3 }}
+              className="mb-6 flex flex-col gap-2"
+            >
+              <div className="flex items-center gap-2 text-white/90">
+                <Timer size={18} className="text-red-600 animate-pulse" />
+                <span className="text-xs sm:text-sm font-bold tracking-wider uppercase">
+                  Kursni chegirma bilan xarid qiling:
+                </span>
+                <span className="bg-red-600 px-2 py-0.5 rounded text-white font-mono text-sm font-bold min-w-[50px] text-center">
+                  {formatTime(timeLeft)}
+                </span>
+              </div>
+            </motion.div>
 
             <motion.button
               whileHover={{
