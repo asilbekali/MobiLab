@@ -15,7 +15,7 @@ export default function Hero() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSocials, setShowSocials] = useState(false);
 
-  // TAYMER UCHUN LOGIKA (120 sekund = 2 minut)
+  // TAYMER UCHUN LOGIKA
   const [timeLeft, setTimeLeft] = useState(120);
 
   useEffect(() => {
@@ -53,6 +53,20 @@ export default function Hero() {
       id="home"
       className="relative h-[100svh] w-full overflow-hidden bg-black flex flex-col justify-end"
     >
+      {/* --- SEO METADATA (HIDDEN FROM VIEW) --- */}
+      <div className="sr-only">
+        <h2>
+          Shoxjaxon Ahmedov - Professional Mobilografiya va Reels Kurslari
+        </h2>
+        <p>
+          Mobilografiya kurslari, Shoxjaxon Ahmedov mobilagrafiya darslari,
+          video montaj o'rganish, professional reels olish sirlari va SMM
+          kontent yaratish.
+        </p>
+        <a href="#kurs">Mobilografiya kursi narxlari va chegirmalar</a>
+      </div>
+      {/* ---------------------------------------- */}
+
       <ContactModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -71,7 +85,7 @@ export default function Hero() {
         >
           <img
             src="/herobg.png"
-            alt="Hero"
+            alt="Shoxjaxon Ahmedov Mobilografiya Kurslari" // SEO uchun Alt text yaxshilandi
             className="w-full h-[75vh] sm:h-full object-contain object-bottom select-none mt-[-15vh] sm:mt-0 transform -translate-y-[10px] sm:translate-y-0"
           />
           <div className="absolute inset-x-0 bottom-0 h-[50%] z-10 pointer-events-none">
@@ -93,7 +107,7 @@ export default function Hero() {
             <div className="flex items-center gap-2 mb-4">
               <span className="w-10 h-[2px] bg-red-600" />
               <span className="text-red-600 text-[10px] sm:text-xs font-bold uppercase tracking-widest italic">
-                Professional Mobilograf
+                Professional Mobilograf & Mentor
               </span>
             </div>
 
@@ -123,7 +137,7 @@ export default function Hero() {
               className="text-zinc-400 text-sm sm:text-lg max-w-sm mb-8 font-medium"
             >
               Kreativ kontent orqali brendingizni rivojlantiring. Mobilografiya
-              xizmati va kurslar.
+              xizmati va professional kurslar.
             </motion.p>
 
             {/* MARKETING TIMER SECTION */}

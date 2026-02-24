@@ -1,39 +1,63 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import Script from "next/script"; // 1. Script komponentini chaqiramiz
+import Script from "next/script";
 import "./globals.css";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
+// 1. SEO va Google uchun kuchli Meta Data
 export const metadata: Metadata = {
-  title: "SHOXJAXON Ahmedov ",
+  title: "Mobilografiya Kursi | SHOXJAXON Ahmedov - Professional Video Montaj",
   description:
-    "Mobilografiya kursi – telefon orqali professional video olish va montaj qilishni o‘rganing. SHOXJAXON Ahmedov bilan noldan boshlab SMM, reels, reklama roliklari va tijoriy videolar tayyorlashni o‘zlashtiring. Bugunoq daromadli kasbni boshlang.",
-  authors: [
-    { name: "Sarvarbek Qodirov", url: "https://kadirov-js.uz" },
-    { name: "Asilbek Abdugaffarov", url: "https://asilbek.com" },
+    "Mobilografiya kurslari - telefon orqali professional reels, reklama va tijoriy videolar olishni SHOXJAXON Ahmedovdan o'rganing. SMM va sifatli kontent yaratish sirlari.",
+  keywords: [
+    "mobilografiya",
+    "mobilografiya kursi",
+    "shoxjaxon axmedov",
+    "shoxjahon ahmedov",
+    "reels olish",
+    "video montaj kursi",
+    "SMM video",
+    "telefon montaj",
+    "mobil video",
+    "reels sirlari",
   ],
+  authors: [{ name: "SHOXJAXON Ahmedov" }],
+  creator: "SHOXJAXON Ahmedov",
+  publisher: "SHOXJAXON Ahmedov",
+  robots: "index, follow",
+  openGraph: {
+    type: "website",
+    locale: "uz_UZ",
+    url: "https://shoxjaxon.uz", // O'z domeningizni yozing
+    title: "SHOXJAXON Ahmedov | Professional Mobilografiya Maktabi",
+    description:
+      "Noldan professional darajagacha mobilografiya kurslari. Bugun o'rganing, ertaga daromad qiling!",
+    siteName: "SHOXJAXON Ahmedov Mobilografiya",
+    images: [{ url: "/og-image.jpg" }], // Ijtimoiy tarmoqlar uchun rasm
+  },
   icons: {
-    icon: [
-      { url: "/icon-light-32x32.png", media: "(prefers-color-scheme: light)" },
-      { url: "/icon-dark-32x32.png", media: "(prefers-color-scheme: dark)" },
-      { url: "/icon.svg", type: "image/svg+xml" },
-    ],
+    icon: "/icon.svg",
     apple: "/apple-icon.png",
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#000000",
+};
+
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <head>
-        {/* 2. Meta Pixel Scriptini shu yerga qo'shamiz */}
+    <html lang="uz">
+      <body className="font-sans antialiased bg-black">
+        {children}
+        <Analytics />
+
+        {/* Meta Pixel - Body oxirida (Hydration xatosi bermasligi uchun) */}
         <Script id="fb-pixel" strategy="afterInteractive">
           {`
             !function(f,b,e,v,n,t,s)
@@ -44,23 +68,18 @@ export default function RootLayout({
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', 'YOUR_PIXEL_ID'); // <--- BU YERGA PIXEL ID QO'YISH KERAK ESDAN CHIQMASIN
+            fbq('init', 'YOUR_PIXEL_ID');
             fbq('track', 'PageView');
           `}
         </Script>
-        {/* Pixel uchun zaxira (noscript) - JS o'chiq bo'lganda ishlaydi */}
         <noscript>
           <img
             height="1"
             width="1"
             style={{ display: "none" }}
-            src={`https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1`}
+            src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"
           />
         </noscript>
-      </head>
-      <body className="font-sans antialiased">
-        {children}
-        <Analytics />
       </body>
     </html>
   );
