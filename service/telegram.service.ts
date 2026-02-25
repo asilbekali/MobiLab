@@ -1,6 +1,4 @@
 import { getNextAdmin } from "@/data/admins";
-import fs from "fs";
-import path from "path";
 
 interface UserData {
   firstName: string;
@@ -9,29 +7,28 @@ interface UserData {
   timestamp: string;
 }
 
-// 0. MUROJAAT RAQAMLARINI BOSHQARISH
+// 0. GLOBAL O'ZGARUVCHILAR (Vercel RAM-da saqlaydi)
+// Diqqat: Bu faqat vaqtinchalik yechim.
+let countsMemory = {
+  total: 0,
+  monthlyCount: 0,
+  lastMonth: ""
+};
+
 function getOrderNumbers() {
-  const filePath = path.join(process.cwd(), "order-count.json");
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
 
-  let data = { total: 0, monthlyCount: 0, lastMonth: currentMonth };
-
-  if (fs.existsSync(filePath)) {
-    try {
-      data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    } catch (e) { console.error(e); }
+  // Oy almashganini tekshirish
+  if (countsMemory.lastMonth !== currentMonth) {
+    countsMemory.monthlyCount = 0;
+    countsMemory.lastMonth = currentMonth;
   }
 
-  if (data.lastMonth !== currentMonth) {
-    data.monthlyCount = 0;
-    data.lastMonth = currentMonth;
-  }
+  countsMemory.total += 1;
+  countsMemory.monthlyCount += 1;
 
-  data.total += 1;
-  data.monthlyCount += 1;
-  fs.writeFileSync(filePath, JSON.stringify(data));
-  return { total: data.total, monthly: data.monthlyCount };
+  return { total: countsMemory.total, monthly: countsMemory.monthlyCount };
 }
 
 function getAdminName(adminId: string): string {
@@ -46,12 +43,12 @@ function getAdminName(adminId: string): string {
 // 1. CALLBACKNI QAYTA ISHLASH (Tugma bosilganda)
 export async function handleCallback(callbackQuery: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const callbackData = callbackQuery.data; // Format: adminId|phone|fullName
+  const callbackData = callbackQuery.data; 
   const messageId = callbackQuery.message.message_id;
   const chatId = callbackQuery.message.chat.id;
   const messageText = callbackQuery.message.text;
 
-  // Ma'lumotlarni ajratib olamiz
+  // Ma'lumotlarni ajratib olamiz: adminId|phone|fullName
   const [adminId, phone, fullName] = callbackData.split("|");
   const adminName = getAdminName(adminId);
 
@@ -84,7 +81,7 @@ export async function handleCallback(callbackQuery: any) {
     }),
   });
 
-  // HISOBOT KANALIGA YUBORISH (Siz so'ragan format)
+  // HISOBOT KANALIGA YUBORISH
   const channelId = process.env.TELEGRAM_CHANNEL_ID;
   if (channelId) {
     const now = new Date();
@@ -171,7 +168,7 @@ export async function sendTelegramMessage(user: UserData) {
     });
   }
 
-  // Adminga yuborish (Tugma ichiga Ism-Familiyani ham joyladik)
+  // Adminga yuborish (Tugma ichiga adminId|phone|fullName)
   const body = {
     chat_id: Number(admin.id),
     text: adminText,
@@ -181,7 +178,6 @@ export async function sendTelegramMessage(user: UserData) {
         [
           {
             text: "📞 Bog'landim (Tasdiqlash)",
-            // callback_data ga ismni ham qo'shdik: adminId|phone|fullName
             callback_data: `${admin.id}|${user.phone}|${fullName}`,
           },
         ],
