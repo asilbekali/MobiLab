@@ -7,6 +7,7 @@ interface UserData {
   timestamp: string;
 }
 
+// Admin ismini olish uchun yordamchi funksiya
 function getAdminName(adminId: string): string {
   const admins = process.env.ADMINS?.split(",") || [];
   for (const item of admins) {
@@ -16,10 +17,10 @@ function getAdminName(adminId: string): string {
   return "Admin";
 }
 
-// 1. CALLBACKNI QAYTA ISHLASH (Tugma bosilganda)
+// 1. CALLBACKNI QAYTA ISHLASH (Admin tugmani bosganda)
 export async function handleCallback(callbackQuery: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const callbackData = callbackQuery.data;
+  const callbackData = callbackQuery.data; // "adminId|phone"
   const messageId = callbackQuery.message.message_id;
   const chatId = callbackQuery.message.chat.id;
   const messageText = callbackQuery.message.text;
@@ -27,15 +28,16 @@ export async function handleCallback(callbackQuery: any) {
   const [adminId, phone] = callbackData.split("|");
   const adminName = getAdminName(adminId);
 
-  // Ismni xabardan ajratib olish (Vizual chiroyli chiqishi uchun)
-  const originalSender = messageText.split("\n")[2] || "Mijoz";
+  // --- MIJOZ ISMINI XABARDAN QIDIRIB OLISH ---
+  const nameLine = messageText.split("\n").find((line: string) => line.includes("Ism:"));
+  const clientName = nameLine ? nameLine.split(":")[1].trim() : "Noma'lum";
 
-  // Xabarni yangilash (Adminga o'zida ko'rinadigan qismi)
+  // A) Adminning o'zidagi xabarni yangilash (Tugmani o'chirish)
   const updatedText =
     `${messageText}\n\n` +
     `━━━━━━━━━━━━━━━━━━\n` +
     `✅ <b>BU MIJOZ BILAN BOG'LANILDI</b>\n` +
-    `👤 <b>Admin:</b> ${adminName}`;
+    `👤 <b>Mas'ul admin:</b> ${adminName}`;
 
   await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
     method: "POST",
@@ -45,23 +47,13 @@ export async function handleCallback(callbackQuery: any) {
       message_id: messageId,
       text: updatedText,
       parse_mode: "HTML",
-    }),
-  });
-
-  // Tugmalarni o'chirish
-  await fetch(`https://api.telegram.org/bot${token}/editMessageReplyMarkup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      message_id: messageId,
       reply_markup: { inline_keyboard: [] },
     }),
   });
 
-  // Kanalga professional Log yuborish
-  const channelId = process.env.TELEGRAM_CHANNEL_ID;
-  if (channelId) {
+  // B) HISOBOT KANALIGA (TELEGRAM_CHANNEL_ID) YUBORISH
+  const logChannelId = process.env.TELEGRAM_CHANNEL_ID;
+  if (logChannelId) {
     const now = new Date();
     const callTime = now.toLocaleString("uz-UZ", {
       timeZone: "Asia/Tashkent",
@@ -72,11 +64,13 @@ export async function handleCallback(callbackQuery: any) {
       year: "numeric",
     });
 
-    const logText =
+    // SIZ SO'RAGAN FORMAT:
+    const logFormat =
       `⚡️ <b>HISOBOT: QO'NG'IROQ AMALGA OSHIRILDI</b>\n` +
       `───────────────────\n\n` +
-      `👨‍💻 <b>Admin:</b> <code>${adminName}</code>\n` +
-      `📞 <b>Mijoz:</b> <code>${phone}</code>\n` +
+      `👨‍💻 <b>Admin:</b> ${adminName}\n` +
+      `👤 <b>Mijoz:</b> ${clientName}\n` +
+      `📞 <b>Mijoz tel:</b> <code>${phone}</code>\n` +
       `⏰ <b>Vaqt:</b> ${callTime}\n\n` +
       `📊 <b>Holat:</b> #Bog'lanildi`;
 
@@ -84,60 +78,84 @@ export async function handleCallback(callbackQuery: any) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: Number(channelId),
-        text: logText,
+        chat_id: Number(logChannelId),
+        text: logFormat,
         parse_mode: "HTML",
       }),
     });
   }
 
-  // Bildirishnoma (Popup)
+  // C) Popup bildirishnoma
   await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       callback_query_id: callbackQuery.id,
-      text: "✅ Ma'lumot kanalga saqlandi!",
+      text: "✅ Hisobot kanalga yuborildi!",
     }),
   });
 }
 
-// 2. YANGI REGISTRATSIYA (Adminga boradigan birinchi xabar)
+// 2. YANGI REGISTRATSIYA (Arxiv va Adminga yuborish)
 export async function sendTelegramMessage(user: UserData) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
+  const archiveChannelId = process.env.TELEGRAM_ARCHIVE_CHANEL;
   const admin = getNextAdmin();
-  if (!token || !admin) throw new Error("Bot token yoki admin topilmadi");
+  
+  if (!token) throw new Error("Bot token topilmadi");
 
-  // Xabarni vizual boyitish
-  const text =
+  // Admin va Arxiv uchun umumiy matn
+  const baseText =
     `🆕 <b>YANGI MUROJAAT TUSHDI</b>\n` +
     `───────────────────\n\n` +
     `👤 <b>Ism:</b> ${user.firstName} ${user.lastName}\n` +
     `📞 <b>Tel:</b> <code>${user.phone}</code>\n` +
     `📅 <b>Sana:</b> ${user.timestamp}\n\n` +
-    `⚡️ <b>Mas'ul admin:</b> <u>${admin.name}</u>\n\n` +
-    `<i>Iltimos, mijoz bilan tezroq bog'laning!</i>`;
+    `#YangiMurojaat #Arxiv`;
 
-  const body = {
-    chat_id: Number(admin.id),
-    text,
-    parse_mode: "HTML",
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: "📞 Bog'landim (Tasdiqlash)",
-            callback_data: `${admin.id}|${user.phone}`,
-          },
-        ],
-      ],
-    },
-  };
+  // --- 1. ARXIV KANALIGA YUBORISH ---
+  if (archiveChannelId) {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: Number(archiveChannelId),
+        text: `🗄 <b>ARXIV NUSXASI</b>\n\n${baseText}`,
+        parse_mode: "HTML",
+      }),
+    });
+  }
 
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  return await res.json();
+  // --- 2. ADMINGA YUBORISH ---
+  if (admin) {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: Number(admin.id),
+        text: baseText,
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "📞 Bog'landim (Tasdiqlash)",
+                callback_data: `${admin.id}|${user.phone}`,
+              },
+            ],
+          ],
+        },
+      }),
+    });
+
+    const telegramData = await res.json();
+
+    // API error (assignedAdmin undefined) bo'lmasligi uchun:
+    return {
+      ...telegramData,
+      adminName: admin.name
+    };
+  }
+
+  return { ok: false, error: "Admin topilmadi" };
 }
