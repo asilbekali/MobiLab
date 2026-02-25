@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "uz_UZ",
-    url: "https://shoxjaxon.uz", // O'z domeningizni yozing
+    url: "https://shoxjaxonaxmedov.uz", // O'z domeningizni yozing
     title: "SHOXJAXON Ahmedov | Professional Mobilografiya Maktabi",
     description:
       "Noldan professional darajagacha mobilografiya kurslari. Bugun o'rganing, ertaga daromad qiling!",
@@ -68,7 +68,7 @@ export default function RootLayout({
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', 'YOUR_PIXEL_ID');
+            fbq('init', '3178375402339774'); // Pixel ID here !
             fbq('track', 'PageView');
           `}
         </Script>
