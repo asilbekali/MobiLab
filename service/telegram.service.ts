@@ -9,27 +9,7 @@ interface UserData {
 
 // 0. GLOBAL O'ZGARUVCHILAR (Vercel RAM-da saqlaydi)
 // Diqqat: Bu faqat vaqtinchalik yechim.
-let countsMemory = {
-  total: 0,
-  monthlyCount: 0,
-  lastMonth: ""
-};
 
-function getOrderNumbers() {
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
-
-  // Oy almashganini tekshirish
-  if (countsMemory.lastMonth !== currentMonth) {
-    countsMemory.monthlyCount = 0;
-    countsMemory.lastMonth = currentMonth;
-  }
-
-  countsMemory.total += 1;
-  countsMemory.monthlyCount += 1;
-
-  return { total: countsMemory.total, monthly: countsMemory.monthlyCount };
-}
 
 function getAdminName(adminId: string): string {
   const admins = process.env.ADMINS?.split(",") || [];
@@ -97,9 +77,9 @@ export async function handleCallback(callbackQuery: any) {
     const logText =
       `⚡️ <b>HISOBOT: QO'NG'IROQ AMALGA OSHIRILDI</b>\n` +
       `───────────────────\n\n` +
-      `👨‍💻 <b>Admin:</b> ${adminName}\n` +
-      `📞 <b>Mijoz:</b> ${fullName}\n` +
-      `<b>mijoz telefon:</b> ${phone}\n` +
+      `👨‍💻 <b>Admin:</b> <code>${adminName}</code>\n` +
+      `👤 <b>Mijoz:</b> <b>${fullName}</b>\n` +
+      `📞 <b>Mijoz tel:</b> <code>${phone}</code>\n` +
       `⏰ <b>Vaqt:</b> ${callTime}\n\n` +
       `📊 <b>Holat:</b> #Bog'lanildi`;
 
@@ -133,13 +113,11 @@ export async function sendTelegramMessage(user: UserData) {
   
   if (!token || !admin) throw new Error("Bot token yoki admin topilmadi");
 
-  const counts = getOrderNumbers();
   const fullName = `${user.firstName} ${user.lastName}`;
 
   // Arxiv formati
   const archiveText = 
-    `Umumiy murojat raqami ${counts.total}\n` +
-    `🆕 Bu oy ning Murojaat Raqami: ${counts.monthly}\n` +
+    `🆕 <b>YANGI MUROJAAT TUSHDI</b>\n` +
     `───────────────────\n\n` +
     `👤 <b>Ism:</b> ${fullName}\n` +
     `📞 <b>Tel:</b> <code>${user.phone}</code>\n` +
