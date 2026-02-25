@@ -1,4 +1,6 @@
 import { getNextAdmin } from "@/data/admins";
+import fs from "fs";
+import path from "path";
 
 interface UserData {
   firstName: string;
@@ -7,7 +9,31 @@ interface UserData {
   timestamp: string;
 }
 
-// Admin ismini olish uchun yordamchi funksiya
+// 0. MUROJAAT RAQAMLARINI BOSHQARISH
+function getOrderNumbers() {
+  const filePath = path.join(process.cwd(), "order-count.json");
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
+
+  let data = { total: 0, monthlyCount: 0, lastMonth: currentMonth };
+
+  if (fs.existsSync(filePath)) {
+    try {
+      data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    } catch (e) { console.error(e); }
+  }
+
+  if (data.lastMonth !== currentMonth) {
+    data.monthlyCount = 0;
+    data.lastMonth = currentMonth;
+  }
+
+  data.total += 1;
+  data.monthlyCount += 1;
+  fs.writeFileSync(filePath, JSON.stringify(data));
+  return { total: data.total, monthly: data.monthlyCount };
+}
+
 function getAdminName(adminId: string): string {
   const admins = process.env.ADMINS?.split(",") || [];
   for (const item of admins) {
@@ -17,27 +43,24 @@ function getAdminName(adminId: string): string {
   return "Admin";
 }
 
-// 1. CALLBACKNI QAYTA ISHLASH (Admin tugmani bosganda)
+// 1. CALLBACKNI QAYTA ISHLASH (Tugma bosilganda)
 export async function handleCallback(callbackQuery: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const callbackData = callbackQuery.data; // "adminId|phone"
+  const callbackData = callbackQuery.data; // Format: adminId|phone|fullName
   const messageId = callbackQuery.message.message_id;
   const chatId = callbackQuery.message.chat.id;
   const messageText = callbackQuery.message.text;
 
-  const [adminId, phone] = callbackData.split("|");
+  // Ma'lumotlarni ajratib olamiz
+  const [adminId, phone, fullName] = callbackData.split("|");
   const adminName = getAdminName(adminId);
 
-  // --- MIJOZ ISMINI XABARDAN QIDIRIB OLISH ---
-  const nameLine = messageText.split("\n").find((line: string) => line.includes("Ism:"));
-  const clientName = nameLine ? nameLine.split(":")[1].trim() : "Noma'lum";
-
-  // A) Adminning o'zidagi xabarni yangilash (Tugmani o'chirish)
+  // Admin xabarini yangilash
   const updatedText =
     `${messageText}\n\n` +
     `━━━━━━━━━━━━━━━━━━\n` +
     `✅ <b>BU MIJOZ BILAN BOG'LANILDI</b>\n` +
-    `👤 <b>Mas'ul admin:</b> ${adminName}`;
+    `👤 <b>Admin:</b> ${adminName}`;
 
   await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
     method: "POST",
@@ -47,30 +70,39 @@ export async function handleCallback(callbackQuery: any) {
       message_id: messageId,
       text: updatedText,
       parse_mode: "HTML",
+    }),
+  });
+
+  // Tugmalarni o'chirish
+  await fetch(`https://api.telegram.org/bot${token}/editMessageReplyMarkup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      message_id: messageId,
       reply_markup: { inline_keyboard: [] },
     }),
   });
 
-  // B) HISOBOT KANALIGA (TELEGRAM_CHANNEL_ID) YUBORISH
-  const logChannelId = process.env.TELEGRAM_CHANNEL_ID;
-  if (logChannelId) {
+  // HISOBOT KANALIGA YUBORISH (Siz so'ragan format)
+  const channelId = process.env.TELEGRAM_CHANNEL_ID;
+  if (channelId) {
     const now = new Date();
     const callTime = now.toLocaleString("uz-UZ", {
       timeZone: "Asia/Tashkent",
-      hour: "2-digit",
-      minute: "2-digit",
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    });
+      hour: "2-digit",
+      minute: "2-digit",
+    }).replace(',', '');
 
-    // SIZ SO'RAGAN FORMAT:
-    const logFormat =
+    const logText =
       `⚡️ <b>HISOBOT: QO'NG'IROQ AMALGA OSHIRILDI</b>\n` +
       `───────────────────\n\n` +
       `👨‍💻 <b>Admin:</b> ${adminName}\n` +
-      `👤 <b>Mijoz:</b> ${clientName}\n` +
-      `📞 <b>Mijoz tel:</b> <code>${phone}</code>\n` +
+      `📞 <b>Mijoz:</b> ${fullName}\n` +
+      `<b>mijoz telefon:</b> ${phone}\n` +
       `⏰ <b>Vaqt:</b> ${callTime}\n\n` +
       `📊 <b>Holat:</b> #Bog'lanildi`;
 
@@ -78,84 +110,90 @@ export async function handleCallback(callbackQuery: any) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: Number(logChannelId),
-        text: logFormat,
+        chat_id: Number(channelId),
+        text: logText,
         parse_mode: "HTML",
       }),
     });
   }
 
-  // C) Popup bildirishnoma
+  // Popup bildirishnoma
   await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       callback_query_id: callbackQuery.id,
-      text: "✅ Hisobot kanalga yuborildi!",
+      text: "✅ Hisobot guruhga yuborildi!",
     }),
   });
 }
 
-// 2. YANGI REGISTRATSIYA (Arxiv va Adminga yuborish)
+// 2. YANGI REGISTRATSIYA
 export async function sendTelegramMessage(user: UserData) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const archiveChannelId = process.env.TELEGRAM_ARCHIVE_CHANEL;
   const admin = getNextAdmin();
   
-  if (!token) throw new Error("Bot token topilmadi");
+  if (!token || !admin) throw new Error("Bot token yoki admin topilmadi");
 
-  // Admin va Arxiv uchun umumiy matn
-  const baseText =
-    `🆕 <b>YANGI MUROJAAT TUSHDI</b>\n` +
+  const counts = getOrderNumbers();
+  const fullName = `${user.firstName} ${user.lastName}`;
+
+  // Arxiv formati
+  const archiveText = 
+    `Umumiy murojat raqami ${counts.total}\n` +
+    `🆕 Bu oy ning Murojaat Raqami: ${counts.monthly}\n` +
     `───────────────────\n\n` +
-    `👤 <b>Ism:</b> ${user.firstName} ${user.lastName}\n` +
+    `👤 <b>Ism:</b> ${fullName}\n` +
     `📞 <b>Tel:</b> <code>${user.phone}</code>\n` +
     `📅 <b>Sana:</b> ${user.timestamp}\n\n` +
-    `#YangiMurojaat #Arxiv`;
+    `<b>biriktirilgan admin:</b> ${admin.name}`;
 
-  // --- 1. ARXIV KANALIGA YUBORISH ---
+  // Adminga boradigan xabar
+  const adminText =
+    `🆕 <b>YANGI MUROJAAT TUSHDI</b>\n` +
+    `───────────────────\n\n` +
+    `👤 <b>Ism:</b> ${fullName}\n` +
+    `📞 <b>Tel:</b> <code>${user.phone}</code>\n` +
+    `📅 <b>Sana:</b> ${user.timestamp}\n\n` +
+    `⚡️ <b>Mas'ul admin:</b> <u>${admin.name}</u>`;
+
+  // Arxivga yuborish
   if (archiveChannelId) {
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: Number(archiveChannelId),
-        text: `🗄 <b>ARXIV NUSXASI</b>\n\n${baseText}`,
+        text: archiveText,
         parse_mode: "HTML",
       }),
     });
   }
 
-  // --- 2. ADMINGA YUBORISH ---
-  if (admin) {
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: Number(admin.id),
-        text: baseText,
-        parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "📞 Bog'landim (Tasdiqlash)",
-                callback_data: `${admin.id}|${user.phone}`,
-              },
-            ],
-          ],
-        },
-      }),
-    });
+  // Adminga yuborish (Tugma ichiga Ism-Familiyani ham joyladik)
+  const body = {
+    chat_id: Number(admin.id),
+    text: adminText,
+    parse_mode: "HTML",
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: "📞 Bog'landim (Tasdiqlash)",
+            // callback_data ga ismni ham qo'shdik: adminId|phone|fullName
+            callback_data: `${admin.id}|${user.phone}|${fullName}`,
+          },
+        ],
+      ],
+    },
+  };
 
-    const telegramData = await res.json();
-
-    // API error (assignedAdmin undefined) bo'lmasligi uchun:
-    return {
-      ...telegramData,
-      adminName: admin.name
-    };
-  }
-
-  return { ok: false, error: "Admin topilmadi" };
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  
+  return await res.json();
 }
