@@ -126,12 +126,13 @@ export async function sendTelegramMessage(user: UserData) {
 
   // Adminga boradigan xabar
   const adminText =
-    `🆕 <b>YANGI MUROJAAT TUSHDI</b>\n` +
+   `🚀 <b>YANGI MUROJAAT TUSHDI</b>\n` +
     `───────────────────\n\n` +
-    `👤 <b>Ism:</b> ${fullName}\n` +
+    `👤 <b>Ism:</b> <b>${fullName}</b>\n` +
     `📞 <b>Tel:</b> <code>${user.phone}</code>\n` +
     `📅 <b>Sana:</b> ${user.timestamp}\n\n` +
-    `⚡️ <b>Mas'ul admin:</b> <u>${admin.name}</u>`;
+    `👨‍💻 <b>Mas'ul admin:</b> <u>${admin.name}</u>\n\n` +
+    `<i>Iltimos, mijoz bilan tezroq bog'laning!</i>`;
 
   // Arxivga yuborish
   if (archiveChannelId) {
