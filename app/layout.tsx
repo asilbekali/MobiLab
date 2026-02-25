@@ -15,8 +15,9 @@ export const metadata: Metadata = {
   description:
     "Mobilografiya kurslari - telefon orqali professional reels, reklama va tijoriy videolar olishni SHOXJAXON Ahmedovdan o'rganing.",
   keywords: [
-    "mobilografiya",
+
     "shoxjaxon axmedov",
+    "mobilografiya",
     "reels olish",
     "video montaj kursi",
   ],
