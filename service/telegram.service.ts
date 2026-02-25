@@ -7,10 +7,6 @@ interface UserData {
   timestamp: string;
 }
 
-// 0. GLOBAL O'ZGARUVCHILAR (Vercel RAM-da saqlaydi)
-// Diqqat: Bu faqat vaqtinchalik yechim.
-
-
 function getAdminName(adminId: string): string {
   const admins = process.env.ADMINS?.split(",") || [];
   for (const item of admins) {
@@ -20,7 +16,7 @@ function getAdminName(adminId: string): string {
   return "Admin";
 }
 
-// 1. CALLBACKNI QAYTA ISHLASH (Tugma bosilganda)
+// 1. CALLBACKNI QAYTA ISHLASH 
 export async function handleCallback(callbackQuery: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const callbackData = callbackQuery.data; 
@@ -78,10 +74,10 @@ export async function handleCallback(callbackQuery: any) {
       `⚡️ <b>HISOBOT: QO'NG'IROQ AMALGA OSHIRILDI</b>\n` +
       `───────────────────\n\n` +
       `👨‍💻 <b>Admin:</b> <code>${adminName}</code>\n` +
-      `👤 <b>Mijoz:</b> <b>${fullName}</b>\n` +
+      `👤 <b>Mijoz ismi:</b> <b>${fullName}</b>\n` +
       `📞 <b>Mijoz tel:</b> <code>${phone}</code>\n` +
       `⏰ <b>Vaqt:</b> ${callTime}\n\n` +
-      `📊 <b>Holat:</b> #Bog'lanildi`;
+      `📊 <b>Holat:</b> #Boglanildi`;
 
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
@@ -105,6 +101,7 @@ export async function handleCallback(callbackQuery: any) {
   });
 }
 
+
 // 2. YANGI REGISTRATSIYA
 export async function sendTelegramMessage(user: UserData) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -119,7 +116,7 @@ export async function sendTelegramMessage(user: UserData) {
   const archiveText = 
     `🆕 <b>YANGI MUROJAAT TUSHDI</b>\n` +
     `───────────────────\n\n` +
-    `👤 <b>Ism:</b> ${fullName}\n` +
+    `👤 <b>Mijoz ismi:</b> ${fullName}\n` +
     `📞 <b>Tel:</b> <code>${user.phone}</code>\n` +
     `📅 <b>Sana:</b> ${user.timestamp}\n\n` +
     `<b>biriktirilgan admin:</b> ${admin.name}`;
