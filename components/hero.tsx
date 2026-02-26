@@ -14,7 +14,6 @@ import ContactModal from "./ContactModal";
 export default function Hero() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSocials, setShowSocials] = useState(false);
-
   const [timeLeft, setTimeLeft] = useState(120);
 
   useEffect(() => {
@@ -62,9 +61,10 @@ export default function Hero() {
 
       {/* BACKGROUND & IMAGE SECTION */}
       <motion.div
-        initial={{ scale: 1.05, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
+        // Sayt ochilganda silliq paydo bo'lish animatsiyasi
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
         className="absolute inset-0 z-0 flex items-start justify-center"
       >
         <motion.div
@@ -72,21 +72,23 @@ export default function Hero() {
           style={{ x: bgX, y: bgY }}
         >
           {/* IMAGE WITH GRADIENT MASK */}
-          <div className="relative w-full h-[50vh] sm:h-[80vh] px-[5px]">
+          {/* Mobil uchun: pt-20 rasmni headerdan pastga tushiradi, h-[65vh] balandlikni moslaydi */}
+          <div className="relative w-full h-[65vh] sm:h-[80vh] px-[5px] pt-20 sm:pt-0">
             <img
               src="/herobg.png"
               alt="Shoxjaxon Ahmedov"
-              className="w-full h-full object-contain object-top select-none [mask-image:linear-gradient(to_bottom,black_70%,transparent_100%)]"
+              className="w-full h-full object-contain object-top select-none [mask-image:linear-gradient(to_bottom,black_65%,transparent_100%)]"
             />
           </div>
           
           {/* SMOOTH BLUR & GRADIENT OVERLAY */}
-          <div className="absolute inset-x-0 bottom-0 h-[60%] z-10 pointer-events-none">
-            {/* Bu qatlam rasm kesilgan joyni butunlay yashiradi */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-transparent z-20" />
+          {/* Rasm tagi qirqilganini yashirish uchun kuchaytirilgan qatlamlar */}
+          <div className="absolute inset-x-0 bottom-0 h-[55%] sm:h-[60%] z-10 pointer-events-none">
+            {/* Asosiy qora gradient - rasm va matnni bog'laydi */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/95 to-transparent z-20" />
             
-            {/* Yumshoq blur effekti */}
-            <div className="absolute inset-0 backdrop-blur-[2px] [mask-image:linear-gradient(to_top,black_40%,transparent_100%)] z-10" />
+            {/* Mobil uchun kuchaytirilgan blur (6px) va maska */}
+            <div className="absolute inset-0 backdrop-blur-[6px] sm:backdrop-blur-[2px] [mask-image:linear-gradient(to_top,black_45%,transparent_100%)] z-10" />
           </div>
         </motion.div>
       </motion.div>
@@ -97,7 +99,7 @@ export default function Hero() {
           <motion.div
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
             className="w-full lg:w-[60%]"
           >
             <div className="flex items-center gap-2 mb-3">
