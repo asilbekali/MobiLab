@@ -50,6 +50,8 @@ const stats = [
   { label: "Mukofotlar", value: 13, suffix: "" },
 ];
 
+
+
 export default function Statistics() {
   return (
     <section className="bg-black py-20 px-4">
