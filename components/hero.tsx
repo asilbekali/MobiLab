@@ -7,7 +7,7 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
-import { Instagram, Send, X, Phone, Timer } from "lucide-react";
+import { Instagram, Send, X, Phone, Timer, MapPin } from "lucide-react"; // MapPin qo'shildi
 import { useEffect, useState } from "react";
 import ContactModal from "./ContactModal";
 
@@ -51,7 +51,7 @@ export default function Hero() {
       className="relative h-[100svh] w-full overflow-hidden bg-black flex flex-col justify-end"
     >
       <div className="sr-only">
-        <h2>Shoxjaxon Ahmedov - Professional Mobilografiya va Reels Kurslari</h2>
+        <h2>Shoxjaxon Axmedov - Professional Mobilografiya va Reels Kurslari</h2>
       </div>
 
       <ContactModal
@@ -61,40 +61,32 @@ export default function Hero() {
 
       {/* BACKGROUND & IMAGE SECTION */}
       <motion.div
-        // Sayt ochilganda silliq paydo bo'lish animatsiyasi
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute inset-0 z-0 flex items-start justify-center"
+        className="absolute inset-0 z-0 flex items-start justify-center mb-5 pointer-events-none"
       >
         <motion.div
           className="w-full h-full relative"
           style={{ x: bgX, y: bgY }}
         >
-          {/* IMAGE WITH GRADIENT MASK */}
-          {/* Mobil uchun: pt-20 rasmni headerdan pastga tushiradi, h-[65vh] balandlikni moslaydi */}
           <div className="relative w-full h-[65vh] sm:h-[80vh] px-[5px] pt-20 sm:pt-0">
             <img
               src="/herobg.png"
-              alt="Shoxjaxon Ahmedov"
+              alt="Shoxjaxon Axmedov"
               className="w-full h-full object-contain object-top select-none [mask-image:linear-gradient(to_bottom,black_65%,transparent_100%)]"
             />
           </div>
           
-          {/* SMOOTH BLUR & GRADIENT OVERLAY */}
-          {/* Rasm tagi qirqilganini yashirish uchun kuchaytirilgan qatlamlar */}
           <div className="absolute inset-x-0 bottom-0 h-[55%] sm:h-[60%] z-10 pointer-events-none">
-            {/* Asosiy qora gradient - rasm va matnni bog'laydi */}
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/95 to-transparent z-20" />
-            
-            {/* Mobil uchun kuchaytirilgan blur (6px) va maska */}
             <div className="absolute inset-0 backdrop-blur-[6px] sm:backdrop-blur-[2px] [mask-image:linear-gradient(to_top,black_45%,transparent_100%)] z-10" />
           </div>
         </motion.div>
       </motion.div>
 
       {/* CONTENT AREA */}
-      <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 pb-10 sm:pb-20 relative z-30">
+      <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 pb-10 sm:pb-20 relative z-30 mt-5">
         <div className="overflow-hidden">
           <motion.div
             initial={{ y: 50, opacity: 0 }}
@@ -109,10 +101,20 @@ export default function Hero() {
               </span>
             </div>
 
-            <h1 className="text-[12vw] sm:text-[10vw] lg:text-[85px] font-black leading-[0.85] uppercase mb-6 italic text-white">
+            <h1 className="text-[12vw] sm:text-[10vw] lg:text-[85px] font-black leading-[0.85] uppercase mb-4 italic text-white">
               <span className="text-red-600 block">Shoxjaxon</span>
               <span className="block">Axmedov</span>
             </h1>
+
+            {/* LOCATION BADGE - Yangi qo'shilgan qism */}
+            <div className="flex items-center gap-2 mb-6">
+              <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full">
+                <MapPin size={14} className="text-red-600" />
+                <span className="text-white text-[11px] sm:text-xs font-bold uppercase tracking-tighter">
+                  Kurslar Faqat Offline — Toshkent shahrida
+                </span>
+              </div>
+            </div>
 
             <p className="text-zinc-300 text-sm sm:text-lg max-w-sm mb-6 font-medium">
               Kreativ kontent orqali brendingizni rivojlantiring. 
